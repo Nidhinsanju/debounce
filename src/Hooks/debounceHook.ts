@@ -1,33 +1,31 @@
 import axios from "axios";
 
-export const getProducts = async (data: string) => {
+export const getProducts = async (data: string): Promise<any> => {
   try {
     const res = await axios.get(
       `https://dummyjson.com/products/search?q=${data}`
     );
-    if (res?.status === 200) {
-      console.log(res, "success");
-    }
-    if (res?.status !== 200) {
-      console.log(res, "Failed");
-    }
+    return res.data;
   } catch (err) {
-    console.log(err);
+    throw err;
   }
 };
 
-let debounceTimer = 0; // store timer globally
-
-// debounce util
-const _getProductsDebounce = (
-  callback: (...args: any[]) => void,
+const _getProductsDebounce = <T extends any[], R>(
+  callback: (...args: T) => Promise<R>,
   delay = 500
 ) => {
-  return (...args: any[]) => {
-    clearTimeout(debounceTimer); // clear old timer
-    debounceTimer = setTimeout(() => {
-      callback(...args); // run callback
-    }, delay);
+  let timer: number = 0;
+
+  return (...args: T): Promise<R> => {
+    return new Promise((resolve, reject) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        callback(...args)
+          .then(resolve)
+          .catch(reject);
+      }, delay);
+    });
   };
 };
 
